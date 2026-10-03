@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: "1"
+  # uv's own Python builds (latest patch releases), never the runner's system Python
+  UV_PYTHON_PREFERENCE: only-managed
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          cache-suffix: pre-commit
+      - run: uv sync --locked
+      # the hook environments; building actionlint and shellcheck takes about a minute
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml', '.python-version') }}
+      - run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          cache-suffix: typecheck
+      - run: uv sync --locked
+      - name: mypy
+        run: uv run mypy
+      - name: mypy with the pydantic plugin (user-facing typing tests)
+        run: uv run mypy --config-file tests/typing/mypy-pydantic-plugin.ini
+      - name: pyright
+        run: uv run pyright
+      - name: ty
+        run: uv run ty check
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          cache-suffix: package
+      - run: uv build
+      - name: Check the package
+        run: uvx twine==7.0.0 check --strict dist/*  # the same version as in release.yml
+      # The sdist's tests, run against the installed wheel: a file missing from either fails them.
+      - name: Test the built package
+        run: |
+          uv venv "$RUNNER_TEMP/venv"
+          uv export --frozen --only-group dev --no-hashes > "$RUNNER_TEMP/dev-requirements.txt"
+          uv pip install --python "$RUNNER_TEMP/venv" dist/*.whl -r "$RUNNER_TEMP/dev-requirements.txt"
+          mkdir "$RUNNER_TEMP/sdist"
+          tar xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist" --strip-components=1
+          cd "$RUNNER_TEMP/sdist"
+          "$RUNNER_TEMP/venv/bin/python" -m pytest
+
+  test:
+    name: test (Python ${{ matrix.python }}${{ matrix.deps != 'locked' && format(', {0} deps', matrix.deps) || '' }})
+    runs-on: ubuntu-latest
+    # pre-release Python versions don't block
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14"]
+        # "locked": the versions in uv.lock. "lowest": the lowest allowed versions of the
+        # dependencies (pydantic, cryptography, ...). "latest": the newest allowed versions, i.e.
+        # what a new user gets today; uv.lock may lag behind.
+        deps: [locked]
+        include:
+          # (an include that matched an existing combination would modify it, not add a job)
+          - python: "3.11"
+            deps: lowest
+          - python: "3.14"
+            deps: latest
+          - python: "3.15"
+            deps: locked
+            experimental: true
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+      # Applies to every uv command in the job: `uv run` re-resolves if it differs from `uv sync`'s.
+      UV_RESOLUTION: ${{ matrix.deps == 'lowest' && 'lowest-direct' || 'highest' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          # one cache per kind of job; with the default key they all race to save the same one
+          cache-suffix: test-${{ matrix.python }}-${{ matrix.deps }}
+      - name: Install
+        # latest: re-resolve to the newest versions (only on the runner; the repo's uv.lock is unchanged)
+        run: uv sync ${{ matrix.deps == 'locked' && '--locked' || matrix.deps == 'latest' && '--upgrade' || '' }}
+      # --no-sync from here on: `uv run` would otherwise install the default groups again
+      - name: Versions
+        run: uv run --no-sync python -c "import sys, pydantic, cryptography, pydantic_settings; print(sys.version, pydantic.VERSION, cryptography.__version__, pydantic_settings.__version__)"
+      - name: pytest
+        run: uv run --no-sync pytest --cov --cov-report=term "--cov-report=markdown-append:$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,119 @@
+[project]
+name = "pydantic-cryptography"
+version = "0.1.0"
+description = "Pydantic types for cryptographic keys: load and validate PEM keys in settings, get JWKs and JWKS"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Joakim Nordling", email = "joakim.nordling@gmail.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "cryptography>=50.0.2",  # 50.0.2: the latest security fixes, OpenSSL 4.0.3 (keep up with them)
+    "typing-extensions>=4.12",  # TypeVar with a default (PEP 696), in typing only since 3.13
+]
+keywords = ["pydantic", "pydantic-settings", "cryptography", "pem", "jwk", "jwks", "rsa", "ecdsa", "ed25519"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Pydantic :: 2",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security :: Cryptography",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/joakimnordling/pydantic-cryptography"
+Documentation = "https://github.com/joakimnordling/pydantic-cryptography#readme"
+Changelog = "https://github.com/joakimnordling/pydantic-cryptography/blob/main/CHANGELOG.md"
+Issues = "https://github.com/joakimnordling/pydantic-cryptography/issues"
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+# The sdist carries the test suite, so a build from source can run it against the Pydantic and
+# cryptography it has. Not in the wheel: `tests/` is outside `src/`.
+[tool.uv.build-backend]
+source-include = ["tests/**", "CHANGELOG.md"]
+source-exclude = ["**/__pycache__", "**/*.pyc"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff==0.16.10",
+    "mypy==2.4.0",
+    "pyright==1.1.414",
+    "ty==0.0.84",  # keep in sync with the ty-pre-commit rev
+    "pre-commit>=4",
+    "pytest-cov>=6.3",  # 6.3: markdown reports (CI job summary)
+    "pydantic-settings>=2.6",
+    "pyjwt>=2.10",  # used in the README examples
+    "fastapi>=0.133",  # the JWKS endpoint in the README and its tests
+    "httpx2>=2",  # FastAPI's TestClient
+    "joserfc>=1.6.4",  # an independent JWK implementation to check ours against; 1.6.4: pads EC members
+]
+
+[tool.uv]
+required-version = ">=0.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "-ra"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["pydantic_cryptography"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# D213: a multi-line docstring starts its text on the line after the opening quotes
+# S: security checks (bandit's rules); T10: leftover debugger calls; PT: pytest style
+# C4, PIE, RET, PERF, FURB: simpler comprehensions, returns and idioms
+select = [
+    "E", "F", "W", "I", "UP", "B", "SIM", "RUF", "D213", "S", "T10",
+    "PT", "C4", "PIE", "RET", "PERF", "FURB",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# the typing tests contain deliberately wrong lines
+"tests/typing/*" = ["F841"]
+# tests use plain asserts, pickle and hard-coded test keys on purpose
+"tests/*" = ["S"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]  # tests/typing included: it must type-check like a user's code
+cache_dir = ".cache/mypy"
+
+[tool.pyright]
+include = ["src", "tests/typing"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+# The private classes and functions in _keys.py use each other's underscore members by design.
+reportPrivateUsage = false
+# tests/typing marks its planted errors with `# type: ignore`; an unneeded one means a missed error
+reportUnnecessaryTypeIgnoreComment = "error"
+
+[tool.ty.src]
+include = ["src", "tests/typing"]
+
+[tool.ty.rules]
+# tests/typing marks its planted errors with `# type: ignore`; an unneeded one means a missed error
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"

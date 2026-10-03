@@ -1,0 +1,43 @@
+name: Bug report
+description: Something doesn't work as documented, e.g. a valid key is refused, or a JWK is wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        **Never paste a real private key here.** Reproduce the problem with a throwaway key, e.g.
+        from `openssl genpkey -algorithm ed25519`. To report a security problem, use
+        [private reporting](https://github.com/joakimnordling/pydantic-cryptography/security/advisories/new)
+        instead.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Minimal example
+      description: >-
+        The smallest self-contained script that shows the problem, with the model and a throwaway
+        key (or the code that generates one).
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output or traceback
+      render: text
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: >-
+        Run `python -c "import sys, pydantic, cryptography; from importlib.metadata import version;
+        print(version('pydantic-cryptography'), pydantic.VERSION, cryptography.__version__, sys.version)"`
+      placeholder: pydantic-cryptography 0.1.0, Pydantic 2.13.0, cryptography 50.0.2, Python 3.13.7
+    validations:
+      required: true
