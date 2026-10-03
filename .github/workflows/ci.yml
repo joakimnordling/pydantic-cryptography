@@ -71,7 +71,9 @@ jobs:
       - name: Test the built package
         run: |
           uv venv "$RUNNER_TEMP/venv"
-          uv export --frozen --only-group dev --no-hashes > "$RUNNER_TEMP/dev-requirements.txt"
+          # --color never: FORCE_COLOR would put escape codes in the file
+          uv export --color never --frozen --only-group dev --no-hashes \
+            > "$RUNNER_TEMP/dev-requirements.txt"
           uv pip install --python "$RUNNER_TEMP/venv" dist/*.whl -r "$RUNNER_TEMP/dev-requirements.txt"
           mkdir "$RUNNER_TEMP/sdist"
           tar xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist" --strip-components=1
