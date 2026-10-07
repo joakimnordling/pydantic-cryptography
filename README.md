@@ -272,7 +272,36 @@ For Ed25519 and Ed448 keys, the defaults are the fully-specified algorithms of
 [RFC 9864](https://www.rfc-editor.org/rfc/rfc9864), which deprecates the older `EdDSA`. Not every
 library knows them yet: PyJWT doesn't as of 2.15 ([issue](https://github.com/jpadilla/pyjwt/issues/1190),
 [pull request](https://github.com/jpadilla/pyjwt/pull/1199)), and it can't use a JWK that has them.
-Until your verifiers do, use `Alg("EdDSA")`, and sign with `algorithm=key.alg` as usual.
+Until your verifiers do, use `Alg("EdDSA")`, and sign with `algorithm=key.alg` as usual. With
+PyJWT:
+
+<!-- readme-test: needs jwt -->
+```python
+from typing import Annotated
+
+import jwt
+from cryptography.hazmat.primitives.asymmetric import ed25519
+
+from pydantic_cryptography import JWKS, Alg
+
+os.environ["ED25519_SIGNING_KEY"] = PrivateKey(ed25519.Ed25519PrivateKey.generate()).private_pem
+
+
+class EdDSASettings(BaseSettings):
+    ed25519_signing_key: Annotated[PrivateKey[ed25519.Ed25519PrivateKey], Alg("EdDSA")]
+
+
+ed_key = EdDSASettings().ed25519_signing_key
+assert ed_key.alg == ed_key.public_jwk.alg == "EdDSA"
+token = jwt.encode(
+    {"sub": "someone"}, ed_key.key, algorithm=ed_key.alg, headers={"kid": ed_key.kid}
+)
+
+# a verifier using your JWKS, e.g. with PyJWT's PyJWKClient, finds the key by its kid
+jwk_set = jwt.PyJWKSet.from_dict(JWKS.from_keys(ed_key).model_dump())
+claims = jwt.decode(token, jwk_set[ed_key.kid], algorithms=["EdDSA"])
+assert claims == {"sub": "someone"}
+```
 
 The names of the kinds of keys (`"RSA"`, `"EC"`, ...) and of the algorithms (`"RS256"`, ...) are
 typed as `KindName` and `AlgName`, which you can import too, e.g. for a value from your own config.
@@ -373,8 +402,9 @@ class EphemeralSettings(BaseSettings):
 - X.509 certificates aren't accepted: a `PublicKey` takes the key itself. Take it out of a
   certificate with `cryptography` (`load_pem_x509_certificate(data).public_key()`) and pass the key
   object.
-- PyJWT (as of 2.15) doesn't know the Ed25519 and Ed448 algorithms; see [Algorithms](#algorithms)
-  for the workaround.
+- PyJWT (as of 2.15) supports Ed25519 and Ed448 keys, but only with the older `alg` `EdDSA`, not
+  `Ed25519` / `Ed448`, the defaults here: signing with them fails, and `PyJWKClient` skips JWKs
+  that have them. Set `Alg("EdDSA")` on the field until it does; see [Algorithms](#algorithms).
 
 ## License
 
