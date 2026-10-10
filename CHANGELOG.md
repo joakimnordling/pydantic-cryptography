@@ -8,6 +8,10 @@ may contain breaking changes.
 
 ## [Unreleased]
 
+### Added
+
+- Support for Python 3.15.
+
 ## [0.1.0] - 2026-10-03
 
 ### Added
