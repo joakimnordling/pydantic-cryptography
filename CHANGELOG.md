@@ -8,6 +8,12 @@ may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-10
+
+### Added
+
+- Support for Python 3.15.
+
 ## [0.1.0] - 2026-10-03
 
 ### Added
@@ -36,5 +42,6 @@ may contain breaking changes.
   type checkers understand.
 - Type-checker support: mypy, pyright and ty.
 
-[Unreleased]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joakimnordling/pydantic-cryptography/releases/tag/v0.1.0

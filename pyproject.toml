@@ -1,6 +1,6 @@
 [project]
 name = "pydantic-cryptography"
-version = "0.1.0"
+version = "0.1.1"
 description = "Pydantic types for cryptographic keys: load and validate PEM keys in settings, get JWKs and JWKS"
 readme = "README.md"
 license = "MIT"
@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Security :: Cryptography",
     "Typing :: Typed",
 ]
@@ -35,7 +36,7 @@ Changelog = "https://github.com/joakimnordling/pydantic-cryptography/blob/main/C
 Issues = "https://github.com/joakimnordling/pydantic-cryptography/issues"
 
 [build-system]
-requires = ["uv_build>=0.12,<0.13"]
+requires = ["uv_build>=0.13,<0.14"]
 build-backend = "uv_build"
 
 # The sdist carries the test suite, so a build from source can run it against the Pydantic and
@@ -47,10 +48,10 @@ source-exclude = ["**/__pycache__", "**/*.pyc"]
 [dependency-groups]
 dev = [
     "pytest>=8",
-    "ruff==0.16.10",
+    "ruff==0.17.0",
     "mypy==2.4.0",
     "pyright==1.1.414",
-    "ty==0.0.84",  # keep in sync with the ty-pre-commit rev
+    "ty==0.0.86",  # keep in sync with the ty-pre-commit rev
     "pre-commit>=4",
     "pytest-cov>=6.3",  # 6.3: markdown reports (CI job summary)
     "pydantic-settings>=2.6",
@@ -61,7 +62,7 @@ dev = [
 ]
 
 [tool.uv]
-required-version = ">=0.12"
+required-version = ">=0.13"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
