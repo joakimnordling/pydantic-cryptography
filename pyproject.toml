@@ -1,6 +1,6 @@
 [project]
 name = "pydantic-cryptography"
-version = "0.1.1"
+version = "0.1.2"
 description = "Pydantic types for cryptographic keys: load and validate PEM keys in settings, get JWKs and JWKS"
 readme = "README.md"
 license = "MIT"
@@ -36,7 +36,7 @@ Changelog = "https://github.com/joakimnordling/pydantic-cryptography/blob/main/C
 Issues = "https://github.com/joakimnordling/pydantic-cryptography/issues"
 
 [build-system]
-requires = ["uv_build>=0.13,<0.14"]
+requires = ["uv_build>=0.13.5,<0.14"]
 build-backend = "uv_build"
 
 # The sdist carries the test suite, so a build from source can run it against the Pydantic and
@@ -47,22 +47,24 @@ source-exclude = ["**/__pycache__", "**/*.pyc"]
 
 [dependency-groups]
 dev = [
-    "pytest>=8",
-    "ruff==0.17.0",
+    "pytest>=9.1.1",
+    "ruff==0.17.2",
     "mypy==2.4.0",
     "pyright==1.1.414",
-    "ty==0.0.86",  # keep in sync with the ty-pre-commit rev
-    "pre-commit>=4",
-    "pytest-cov>=6.3",  # 6.3: markdown reports (CI job summary)
-    "pydantic-settings>=2.6",
-    "pyjwt>=2.10",  # used in the README examples
-    "fastapi>=0.133",  # the JWKS endpoint in the README and its tests
-    "httpx2>=2",  # FastAPI's TestClient
-    "joserfc>=1.6.4",  # an independent JWK implementation to check ours against; 1.6.4: pads EC members
+    "ty==0.0.91",  # keep in sync with the ty-pre-commit rev
+    "pre-commit>=4.7.0",
+    "pytest-cov>=7.1.0",  # 6.3: markdown reports (CI job summary)
+    "pydantic-settings>=2.16.1",
+    "pyjwt>=2.15.1",  # used in the README examples
+    # the JWKS endpoint in the README and its tests; FastAPI 0.136+ needs Pydantic 2.9, so a
+    # higher minimum would keep the lowest-deps CI job from testing our minimum, Pydantic 2.7
+    "fastapi>=0.133",
+    "httpx2>=2.16.0",  # FastAPI's TestClient
+    "joserfc>=1.7.7",  # an independent JWK implementation to check ours against; 1.6.4: pads EC members
 ]
 
 [tool.uv]
-required-version = ">=0.13"
+required-version = ">=0.13.5"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

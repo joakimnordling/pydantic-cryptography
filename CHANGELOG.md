@@ -8,6 +8,18 @@ may contain breaking changes.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-24
+
+### Security
+
+- Built and published with tools fixed for the eMudhra/emSign CA certificate incident: uv 0.13.5
+  and gh-action-pypi-publish 1.14.3. The package itself makes no network connections and bundles no
+  CA certificates, so it isn't affected.
+
+### Changed
+
+- Building from the sdist needs uv_build 0.13.5 or newer.
+
 ## [0.1.1] - 2026-10-10
 
 ### Added
@@ -42,6 +54,7 @@ may contain breaking changes.
   type checkers understand.
 - Type-checker support: mypy, pyright and ty.
 
-[Unreleased]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/joakimnordling/pydantic-cryptography/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/joakimnordling/pydantic-cryptography/releases/tag/v0.1.0
